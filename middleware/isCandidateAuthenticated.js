@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
-const Recruiter = require('../models/Recruiter')
+const Candidate = require("../models/Candidate");
 
-const isRecruiterAuthenticated = async(req, res, next) => {
+const isCandidateAuthenticated = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     return res
@@ -11,9 +11,11 @@ const isRecruiterAuthenticated = async(req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const isRecruiterFound = await Recruiter.findOne({ _id: decoded.recruiter });
-    if(!isRecruiterFound){
-      res.status(404).send({message: "The user you are trying to search for is not found."});
+    const isCandidateFound = await Candidate.findOne({
+      _id: decoded.candidate,
+    });
+    if (!isCandidateFound) {
+      res.status(404).send({message: "The user does not exist"});
     }
     next();
   } catch (error) {
@@ -21,4 +23,4 @@ const isRecruiterAuthenticated = async(req, res, next) => {
   }
 };
 
-module.exports = isRecruiterAuthenticated;
+module.exports = isCandidateAuthenticated;
