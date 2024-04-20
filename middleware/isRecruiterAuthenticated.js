@@ -15,6 +15,7 @@ const isRecruiterAuthenticated = async(req, res, next) => {
     if(!isRecruiterFound){
       res.status(404).send({message: "The user you are trying to search for is not found."});
     }
+    req.recruiterId = isRecruiterFound._id;
     next();
   } catch (error) {
     return res.status(401).send({ message: "Invalid Token" });

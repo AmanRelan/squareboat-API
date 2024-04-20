@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Candidate = require("../models/Candidate");
+const isCandidateAuthenticated = require("../middleware/isCandidateAuthenticated");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -11,7 +12,7 @@ router.post("/signup", async (req, res) => {
     res.status(201).send({ message: "Candidate created successfully" });
   } catch (error) {
     res
-      .status(400)
+      .status(500)
       .send({ message: "Error creating Candidate", error: error.message });
   }
 });
@@ -44,25 +45,16 @@ router.post("/login", async (req, res) => {
       .send({ message: "Internal server error", error: error.message });
   }
 });
-router.post("/logout", async (req, res) => {
+router.post("/logout", isCandidateAuthenticated, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res
-        .status(403)
-        .send({ message: "Access Denied: No token provided." });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const candidateId = req.candidateId;
     const isCandidateFound = await Candidate.findOne({
-      _id: decoded.candidate,
+      _id: candidateId,
     });
     if (!isCandidateFound) {
       res.status(404).send({ message: "Candidate Not Found" });
     }
-    await Candidate.updateOne(
-      { _id: decoded.candidate },
-      { $unset: { token: "" } }
-    );
+    await Candidate.updateOne({ _id: candidateId }, { $unset: { token: "" } });
     res.status(200).send({ message: "Candidate Logged out successfully" });
   } catch (error) {
     res

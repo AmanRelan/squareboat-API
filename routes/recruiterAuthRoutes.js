@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Recruiter = require("../models/Recruiter");
+const isRecruiterAuthenticated = require("../middleware/isRecruiterAuthenticated");
 
 router.post("/signup", async (req, res) => {
   try {
@@ -11,7 +12,7 @@ router.post("/signup", async (req, res) => {
     res.status(201).send({ message: "Recruiter created successfully" });
   } catch (error) {
     res
-      .status(400)
+      .status(500)
       .send({ message: "Error creating Recruiter", error: error.message });
   }
 });
@@ -44,25 +45,16 @@ router.post("/login", async (req, res) => {
       .send({ message: "Internal server error", error: error.message });
   }
 });
-router.post("/logout", async (req, res) => {
+router.post("/logout", isRecruiterAuthenticated, async (req, res) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res
-        .status(403)
-        .send({ message: "Access Denied: No token provided." });
-    }
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const recruiterId = req.recruiterId;
     const isRecruiterFound = await Recruiter.findOne({
-      _id: decoded.recruiter,
+      _id: recruiterId,
     });
     if (!isRecruiterFound) {
       res.status(404).send({message: "Recruiter Not Found"})
     }
-    await Recruiter.updateOne(
-      { _id: decoded.recruiter },
-      { $unset: { token: "" } }
-    );
+    await Recruiter.updateOne({ _id: recruiterId }, { $unset: { token: "" } });
     res.status(200).send({message: "Recruiter Logged out successfully"});
   } catch (error) {
     res

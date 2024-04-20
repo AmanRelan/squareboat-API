@@ -17,6 +17,7 @@ const isCandidateAuthenticated = async (req, res, next) => {
     if (!isCandidateFound) {
       res.status(404).send({message: "The user does not exist"});
     }
+    req.candidateId = isCandidateFound._id;
     next();
   } catch (error) {
     return res.status(401).send({ message: "Invalid Token" });

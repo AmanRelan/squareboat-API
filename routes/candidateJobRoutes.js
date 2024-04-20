@@ -26,7 +26,7 @@ router.get("/jobs", isCandidateAuthenticated, async (req, res) => {
       .send({ message: "Found all these jobs for the user", jobs });
   } catch (error) {
     res
-      .status(400)
+      .status(500)
       .send({ message: "Error Getting Jobs", error: error.message });
   }
 });
@@ -34,19 +34,11 @@ router.get("/jobs", isCandidateAuthenticated, async (req, res) => {
 router.post("/applyJob", isCandidateAuthenticated, async (req, res) => {
   try {
     const { jobId } = req.body;
+    const candidateId = req.candidateId;
 
     // Getting user id
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res
-        .status(403)
-        .send({ message: "Missing User Login Information" });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
     const foundCandidate = await Candidate.findOne({
-      _id: decoded.candidate,
+      _id: candidateId,
     });
 
     if (!foundCandidate) {
@@ -69,28 +61,31 @@ router.post("/applyJob", isCandidateAuthenticated, async (req, res) => {
     
     foundCandidate.appliedJobs.push(jobId);
     await foundCandidate.save();
-    await transporter.sendMail({
-      from: 'hiring@website.com',
-      to: foundCandidate.email,
-      subject: "Job Application Confirmation",
-      text: "User has successfully applied to the job"
-    })
+    // await transporter.sendMail({
+    //   from: 'hiring@website.com',
+    //   to: foundCandidate.email,
+    //   subject: "Job Application Confirmation",
+    //   text: "User has successfully applied to the job"
+    // })
     
     foundJob.applicants.push(foundCandidate._id);
     await foundJob.save();
     
     const recruiter = Recruiter.findById(foundJob.recruiterId);
-    await transporter.sendMail({
-      from: "hiring@website.com",
-      to: recruiter.email,
-      subject: "User Applied to a job",
-      text: "This is to inform you that a user has applied to a job you listed.",
-    });
+    if (!recruiter) {
+      return res.status(404).send({ message: "Recruiter not found" });
+    }
+    // await transporter.sendMail({
+    //   from: "hiring@website.com",
+    //   to: recruiter.email,
+    //   subject: "User Applied to a job",
+    //   text: "This is to inform you that a user has applied to a job you listed.",
+    // });
   
     res.status(200).send({message: "Job successfully applied for."})
   } catch (error) {
     res
-      .status(400)
+      .status(500)
       .send({ message: "Error Applying to the Job", error: error.message });
   }
 });
@@ -99,16 +94,9 @@ router.get('/appliedJobs', isCandidateAuthenticated, async(req,res)=> {
   try {
 
     // Getting user id
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-      return res
-        .status(403)
-        .send({ message: "Missing User Login Information" });
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const candidateId = req.candidateId;
     const foundCandidate = await Candidate.findOne({
-      _id: decoded.candidate,
+      _id: candidateId,
     });
 
     if (!foundCandidate) {
@@ -116,7 +104,7 @@ router.get('/appliedJobs', isCandidateAuthenticated, async(req,res)=> {
     }
     res.status(200).send({message: "Here is the information about the applied jobs of the candidate", jobsFound: foundCandidate.appliedJobs});
   } catch(error) {
-    res.status(400).send({ message: "Error Finding Applied jobs for the user", error: error.message})
+    res.status(500).send({ message: "Error Finding Applied jobs for the user", error: error.message})
   }
 
 });
