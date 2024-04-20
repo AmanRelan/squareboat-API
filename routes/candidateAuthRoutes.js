@@ -1,42 +1,42 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const Recruiter = require("../models/Recruiter");
+const Candidate = require("../models/Candidate");
 
 router.post("/signup", async (req, res) => {
   try {
     const { email, password } = req.body;
-    let recruiter = new Recruiter({ email, password });
-    await recruiter.save();
-    res.status(201).send({ message: "Recruiter created successfully" });
+    let candidate = new Candidate({ email, password });
+    await candidate.save();
+    res.status(201).send({ message: "Candidate created successfully" });
   } catch (error) {
     res
       .status(400)
-      .send({ message: "Error creating Recruiter", error: error.message });
+      .send({ message: "Error creating Candidate", error: error.message });
   }
 });
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    let recruiter = await Recruiter.findOne({ email });
-    if (!recruiter)
-      return res.status(404).send({ message: "Recruiter not found" });
+    let candidate = await Candidate.findOne({ email });
+    if (!candidate)
+      return res.status(404).send({ message: "Candidate not found" });
 
-    if (recruiter.password !== password) {
+    if (candidate.password !== password) {
       return res.status(401).send({ message: "Invalid password" });
     }
 
     // Generate a token
     const token = jwt.sign(
-      { recruiter: recruiter._id },
+      { candidate: candidate._id },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    recruiter.token = token;
-    await recruiter.save();
+    candidate.token = token;
+    await candidate.save();
     res.send({
       token,
-      recruiterId: recruiter._id,
+      candidateId: candidate._id,
     });
   } catch (error) {
     res
@@ -53,17 +53,17 @@ router.post("/logout", async (req, res) => {
         .send({ message: "Access Denied: No token provided." });
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const isRecruiterFound = await Recruiter.findOne({
-      _id: decoded.recruiter,
+    const isCandidateFound = await Candidate.findOne({
+      _id: decoded.candidate,
     });
-    if (!isRecruiterFound) {
-      res.status(404).send({message: "Recruiter Not Found"})
+    if (!isCandidateFound) {
+      res.status(404).send({ message: "Candidate Not Found" });
     }
-    await Recruiter.updateOne(
-      { _id: decoded.recruiter },
+    await Candidate.updateOne(
+      { _id: decoded.candidate },
       { $unset: { token: "" } }
     );
-    res.status(200).send({message: "Recruiter Logged out successfully"});
+    res.status(200).send({ message: "Candidate Logged out successfully" });
   } catch (error) {
     res
       .status(500)

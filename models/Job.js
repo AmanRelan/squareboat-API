@@ -6,6 +6,10 @@ const jobSchema = new mongoose.Schema({
     ref: "Recruiter",
     required: true,
   },
+  applicants: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Candidate"
+  }],
   jobTitle: { type: String, required: true },
   jobDescription: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },

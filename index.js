@@ -5,17 +5,18 @@ const app = express();
 const cors = require('cors');
 const recruiterAuthRoutes = require('./routes/recruiterAuthRoutes');
 const recruiterJobRoutes = require("./routes/recruiterJobRoutes");
+const candidateAuthRoutes = require("./routes/candidateAuthRoutes");
+const candidateJobRoutes = require("./routes/candidateJobRoutes");
 
 app.use(cors());
 app.use(express.json());
 const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL || "";
 
-
-
-app.use('/auth/recruiter', recruiterAuthRoutes);
+app.use("/auth/recruiter", recruiterAuthRoutes);
 app.use("/recruiter", recruiterJobRoutes);
-
+app.use("/auth/candidate", candidateAuthRoutes);
+app.use("/candidate", candidateJobRoutes);
 
 //DATABASE Connection
 mongoose

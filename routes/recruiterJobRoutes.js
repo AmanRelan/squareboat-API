@@ -26,4 +26,19 @@ router.post("/job", isRecruiterAuthenticated, async (req, res) => {
   }
 });
 
+router.get("/applicants/:jobId", isRecruiterAuthenticated, async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const isJobFound = await Job.findOne({ _id: jobId });
+    if(!isJobFound){
+      res.status(404).send({message: "The job you are trying to search is not found"});
+    }
+    res.status(200).send({message: "Here are the applicants found for the job you are searching for", applicants: isJobFound.applicants})
+  } catch (error) {
+    res
+      .status(400)
+      .send({ message: `Error getting Applicants:- ${error.message}` });
+  }
+});
+
 module.exports = router;
